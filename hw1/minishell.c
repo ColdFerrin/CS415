@@ -30,6 +30,7 @@ int parseCommand(char *, struct command_t *);
 int parsePath(char **);
 void printPrompt();
 void readCommand(char *);
+char *createPassword(int);
 void addUser(USER **, FILE *);
 
 char promptString[] = "in a Nutt shell >";
@@ -278,6 +279,48 @@ void readCommand(char *buffer)
     buffer[strlen(buffer)-1] = '\0';  // overwrite the line feed with null term
 
     printf("readCommand buffer=%s\n", buffer);
+}
+
+
+char *createPassword(int allowRetry){
+    char salt[] = "$6$................";
+    const char *const saltChars = 
+        "./0123456789ABCDEFGHIJKLMNOPQRST"
+        "UVWXYZabcdefghijklmnopqrstuvwxyz";
+
+    char *password;
+    char *attempt1;
+    char *attemptStatus;
+
+    srandom(time(NULL));
+
+    for(int i = 0; i < 16; i++){
+        salt[i+3] = saltChars[random() & 64];
+    }
+
+    int passwordsMatch = 0;
+    do {
+        int goodAttempt = 0;
+        do {
+            char *passAttempt = getpass("New password: ");
+
+            if(strlen(passAttempt) < 8) {
+                attemptStatus = "BAD PASSWORD: Must be at least 8";
+            }
+            else if(strlen(passAttempt) > 20) {
+                attemptStatus = "BAD PASSWORD: Must be at most 20";
+            }
+            else {
+                attempt1 = crypt(passAttempt, salt);
+                goodAttempt = 1;
+            }
+        } while (!goodAttempt);
+
+        char *passMatch = crypt(getpass("Retype new password: "), salt);
+
+        if (strcmp())
+    } while (!passwordsMatch && allowRetry);
+
 }
 
 
