@@ -12,6 +12,7 @@
  * replaced with recommended fgets with line-feed stripping.
  *
  */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <sys/types.h>
@@ -22,6 +23,7 @@
 #include <errno.h>
 #include <time.h>
 #include <crypt.h>
+#include <dirent.h>
 #include "minishell.h"
 
 
@@ -69,23 +71,34 @@ int main() {
 
     parsePath(pathv);
 
-    char filepath[64];
+    char filepath[128];
     strcpy(filepath, home);
-    strcat(filepath, "/.minishell");
+    strcat(filepath, "/.minishell/");
+
+    DIR* dir = opendir("mydir");
+    if (dir) {
+        closedir(dir);
+    } else if (ENOENT == errno) {
+        mkdir(filepath, DEFFILEMODE | S_IXUSR);
+    } else {
+        printf("THere was a problem opining the shell directory.");
+        return 1;
+    }
 
     FILE *fptr = NULL;
-
-
+    char usersFile[128];
+    strcpy(usersFile, filepath);
+    strcat(usersFile, ".users");
     // if file of users exists read filed load users and check if more users can be added.
     if (access(filepath, R_OK | W_OK) != -1) {
-        FILE *fptrRead = fopen(filepath, "r");
-        int addUsers = getUsers();
+        FILE *fptrRead = fopen(usersFile, "r");
+        int users = getUsers();
         fclose(fptrRead);
-        if (addUsers) {
-            fptr = fopen(filepath, "a");
+        if (users < 10) {
+            fptr = fopen(usersFile, "a");
         }
     } else {        //else create the users file and load for reading
-        fptr = fopen(filepath, "a");
+        fptr = fopen(usersFile, "a");
         addUser(users, fptr);
     }
 
@@ -359,10 +372,16 @@ void addUser(USER **users, FILE *fptrAppend) {
 }
 
 
-int getUsers();
+int getUsers(){
+    return 1;
+}
 
 
-int checkPasswd();
+int checkPasswd(){
+    return 1;
+}
 
 
-int promptUsername();
+int promptUsername(){
+    return 1;
+}
