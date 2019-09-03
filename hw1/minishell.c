@@ -61,7 +61,7 @@ int main() {
     int status;
     struct command_t command;
 
-    USER *users[10];
+    USER *users[10] = {NULL};
     char *home = (char *) getenv("HOME");
     int isLoggedIn = 0;
 
@@ -75,7 +75,7 @@ int main() {
     strcpy(filepath, home);
     strcat(filepath, "/.minishell/");
 
-    DIR* dir = opendir("mydir");
+    DIR* dir = opendir(filepath);
     if (dir) {
         closedir(dir);
     } else if (ENOENT == errno) {
@@ -90,7 +90,7 @@ int main() {
     strcpy(usersFile, filepath);
     strcat(usersFile, ".users");
     // if file of users exists read filed load users and check if more users can be added.
-    if (access(filepath, R_OK | W_OK) != -1) {
+    if (access(usersFile, R_OK | W_OK) != -1) {
         FILE *fptrRead = fopen(usersFile, "r");
         int users = getUsers();
         fclose(fptrRead);
