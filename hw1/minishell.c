@@ -47,7 +47,7 @@ int checkPasswd();
 
 int promptUsername();
 
-char promptString[] = "in a Nutt shell >";
+char promptString[] = "Ferrin shell >";
 extern FILE *stdin;
 
 int main() {
@@ -361,13 +361,40 @@ char *createPassword(int allowRetry) {
 
 
 void addUser(USER **users, FILE *fptrAppend) {
-    USER *existingUsers = *users;
-
     USER *newUser = malloc(sizeof(USER));
 
-    char username[MAX_UNAME + 1];
-    char password[MAX_PASSWD + 1];
+    int userPos = -1;
 
+    char buffer[32];
+    char *usernames[MAX_USERS];
+    char *username;
+    char *password;
+
+    for(int i =0;i < MAX_USERS; ++i){
+        if (users[i] == NULL && userPos == -1){
+            userPos = i;
+        } else {
+            usernames[i] = users[i].uname;
+        }
+    }
+
+    int nameGood = 0;
+    char *attemptStatus;
+    do{
+        printf("New Username: ");
+        username = fgets(buffer, LINE_LEN, stdin);
+
+        if(strlen(username) < 1){
+            attemptStatus = "BAD USERNAME: Username can not be empty";
+        } else if(srlen(username) > MAX_UNAME){
+            attemptStatus = "BAD USERNAME: Username to long";
+        } else if(unameExists(usernames)){
+            attemptStatus = "BAD USERNAME: Username already exists";
+        } else {
+            nameGood = 1;
+        }
+    } while (!nameGood);
+    password = createPassword(1);
 
 }
 

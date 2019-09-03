@@ -13,9 +13,9 @@
 #define	MAX_PATHS	64
 #define MAX_PATH_LEN	512
 #define WHITESPACE	" .,\t"
-#define MAX_PASSWD  32
+#define MAX_PASSWD  20
 #define MAX_UNAME   16
-
+#define MAX_USERS 10
 
 #ifndef NULL
 #define	NULL	0
