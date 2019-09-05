@@ -30,7 +30,7 @@ struct command_t
 
 typedef struct
 {
-    char* question, answer;
+    char* question, *answer;
 } SECURITY_QUESTION;
 
 typedef struct {

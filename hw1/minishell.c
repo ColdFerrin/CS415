@@ -26,7 +26,6 @@
 #include <dirent.h>
 #include "minishell.h"
 
-
 char *lookupPath(char **, char **);
 
 int parseCommand(char *, struct command_t *);
@@ -46,6 +45,10 @@ int getUsers();
 int checkPasswd();
 
 int promptUsername();
+
+int unameExists(char **, char *);
+
+void securityQuestion(USER *, int);
 
 char promptString[] = "Ferrin shell >";
 extern FILE *stdin;
@@ -332,7 +335,7 @@ char *createPassword(int allowRetry) {
 
             if (strlen(passAttempt) < 8) {
                 attemptStatus = "BAD PASSWORD: Must be at least 8";
-            } else if (strlen(passAttempt) > 20) {
+            } else if (strlen(passAttempt) > MAX_PASSWD) {
                 attemptStatus = "BAD PASSWORD: Must be at most 20";
             } else {
                 password = crypt(passAttempt, salt);
@@ -366,15 +369,15 @@ void addUser(USER **users, FILE *fptrAppend) {
     int userPos = -1;
 
     char buffer[32];
-    char *usernames[MAX_USERS];
+    char *usernames[MAX_USERS] = {NULL};
     char *username;
     char *password;
 
     for(int i =0;i < MAX_USERS; ++i){
         if (users[i] == NULL && userPos == -1){
             userPos = i;
-        } else {
-            usernames[i] = users[i].uname;
+        } else if(userPos == -1){
+            usernames[i] = users[i]->uname;
         }
     }
 
@@ -386,15 +389,23 @@ void addUser(USER **users, FILE *fptrAppend) {
 
         if(strlen(username) < 1){
             attemptStatus = "BAD USERNAME: Username can not be empty";
-        } else if(srlen(username) > MAX_UNAME){
+        } else if(strlen(username) > MAX_UNAME){
             attemptStatus = "BAD USERNAME: Username to long";
-        } else if(unameExists(usernames)){
+        } else if(unameExists(usernames, username)){
             attemptStatus = "BAD USERNAME: Username already exists";
         } else {
             nameGood = 1;
         }
+
+        if(!nameGood){
+            printf("%s\n", attemptStatus);
+        }
     } while (!nameGood);
     password = createPassword(1);
+
+    for(int i = 0; i < 3; ++i){
+        securityQuestion(&newUser, i);
+    }
 
 }
 
@@ -409,6 +420,60 @@ int checkPasswd(){
 }
 
 
-int promptUsername(){
+int promptUsername() {
     return 1;
+}
+
+int unameExists(char **users, char* newName) {
+    for (int i = 0; i < MAX_USERS; ++i) {
+        if(users[i] != NULL && strcmp(users[i], newName) == 0){
+            return 1;
+        }
+    }
+    return 0;
+}
+
+void securityQuestion(USER *pUser, int questionNum) {
+    char *question;
+    char *answer = "";
+    char buffer[128];
+
+    int questionGood = 0;
+    char *attemptStatus = "";
+    do{
+        printf("Security Question: ");
+        question = fgets(buffer, LINE_LEN, stdin);
+
+        if(strlen(question) < 1){
+            attemptStatus = "BAD QUESTION: Username can not be empty";
+        } else {
+            questionGood = 1;
+        }
+
+        if(!questionGood){
+            printf("%s\n", attemptStatus);
+        }
+    } while (!questionGood);
+
+    int answerGood = 0;
+    do{
+        printf("Security Question: ");
+        question = fgets(buffer, LINE_LEN, stdin);
+
+        if(strlen(answer) < 1){
+            attemptStatus = "BAD QUESTION: Username can not be empty";
+        } else {
+            answerGood = 1;
+        }
+
+        if(!answerGood){
+            printf("%s\n", attemptStatus);
+        }
+    } while (!answerGood);
+
+    SECURITY_QUESTION *inputQuestion = malloc(sizeof(SECURITY_QUESTION));
+    inputQuestion->question = question;
+    inputQuestion->answer =answer;
+
+    pUser->securityQuestion[questionNum] = inputQuestion;
 }
