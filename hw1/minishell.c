@@ -24,7 +24,10 @@
 #include <time.h>
 #include <crypt.h>
 #include <dirent.h>
+#include <signal.h>
 #include "minishell.h"
+
+void sigHandler(int);
 
 char *lookupPath(char **, char **);
 
@@ -38,22 +41,26 @@ void readCommand(char *);
 
 char *createPassword(int);
 
+int checkPasswd();
+
 void addUser(USER **, FILE *);
 
-int getUsers();
+int getUsers(USER **, FILE *);
 
-int checkPasswd();
+void putUsers(USER **, FILE *);
 
 int promptUsername();
 
 int unameExists(char **, char *);
 
-void securityQuestion(USER *, int);
+void securityQuestion(USER **, int, int);
 
 char promptString[] = "Ferrin shell >";
 extern FILE *stdin;
+volatile sig_atomic_t sigintRecieved = 0;
 
 int main() {
+    signal(SIGINT, sigHandler);
     char commandLine[LINE_LEN];
     char *pathv[MAX_PATHS];
     int numPaths;
@@ -95,36 +102,38 @@ int main() {
     // if file of users exists read filed load users and check if more users can be added.
     if (access(usersFile, R_OK | W_OK) != -1) {
         FILE *fptrRead = fopen(usersFile, "r");
-        int users = getUsers();
+        int userNum = getUsers(users, fptrRead);
         fclose(fptrRead);
-        if (users < 10) {
-            fptr = fopen(usersFile, "a");
+        if (userNum < 10) {
+            fptr = fopen(usersFile, "w");
         }
     } else {        //else create the users file and load for reading
-        fptr = fopen(usersFile, "a");
+        fptr = fopen(usersFile, "w");
         addUser(users, fptr);
     }
 
-    int userNum = promptUsername();
 
-    if (userNum == -1) {
-        printf("Username is not valid \n\n\tEXITING...\n");
-        return 127;
-    }
+    do {
+        int userNum = promptUsername();
 
-    // Login Loop
-    int loginAttempts;
-    for (loginAttempts = 0; loginAttempts < 3 && !isLoggedIn; ++loginAttempts) {
-        isLoggedIn = checkPasswd();
-    }
+        if (userNum == -1) {
+            printf("Username is not valid \n\n\tEXITING...\n");
+            continue;
+        }
 
-    if (!isLoggedIn) {
-        printf("Attempts exceeded \n\n\tExiting...\n");
-        return 1;
-    }
+        // Login Loop
+        int loginAttempts;
+        for (loginAttempts = 0; loginAttempts < 3 && !isLoggedIn; ++loginAttempts) {
+            isLoggedIn = checkPasswd();
+        }
+
+        if (!isLoggedIn) {
+            printf("Attempts exceeded \n\n");
+        }
+    } while (!isLoggedIn);
 
     // Main loop
-    while (isLoggedIn) {
+    while (isLoggedIn || !sigintRecieved) {
         printPrompt();
 
         // Read the command line and parse it
@@ -182,6 +191,10 @@ int main() {
 
         thisChPID = wait(&stat);
     }
+
+    putUsers(users, fptr);
+
+    fclose(fptr);
 // Shell termination
 
 }
@@ -230,6 +243,11 @@ char *lookupPath(char **argv, char **dir) {
     fprintf(stderr, "%s: command not found\n", argv[0]);
     return NULL;
 
+}
+
+
+void sigHandler(int s){
+    sigintRecieved = 1;
 }
 
 
@@ -363,6 +381,11 @@ char *createPassword(int allowRetry) {
 }
 
 
+int checkPasswd(){
+    return 1;
+}
+
+
 void addUser(USER **users, FILE *fptrAppend) {
     USER *newUser = malloc(sizeof(USER));
 
@@ -373,10 +396,10 @@ void addUser(USER **users, FILE *fptrAppend) {
     char *username;
     char *password;
 
-    for(int i =0;i < MAX_USERS; ++i){
-        if (users[i] == NULL && userPos == -1){
+    for(int i =0;i < MAX_USERS && userPos == -1; ++i){
+        if (users[i] == NULL){
             userPos = i;
-        } else if(userPos == -1){
+        } else {
             usernames[i] = users[i]->uname;
         }
     }
@@ -404,19 +427,31 @@ void addUser(USER **users, FILE *fptrAppend) {
     password = createPassword(1);
 
     for(int i = 0; i < 3; ++i){
-        securityQuestion(&newUser, i);
+        securityQuestion(&newUser, i, userPos);
     }
 
+    username = strtok(username, "\n");
+    password = strtok(password, "\n");
+
+    newUser->uname = strdup(username);
+    newUser->passwd = strdup(password);
+    users[userPos] = newUser;
 }
 
 
-int getUsers(){
+int getUsers(USER **users, FILE *userPtr){
     return 1;
 }
 
 
-int checkPasswd(){
-    return 1;
+void putUsers(USER **users, FILE *userPtr){
+    for(int i = 0; i < MAX_USERS; ++i){
+        if(users[i] != NULL){
+            fprintf(userPtr, "%s#%s#%s#%s#%s#%s#%s#%s\n", users[i]->uname, users[i]->passwd, users[i]->securityQuestion[0]->question,
+                    users[i]->securityQuestion[0]->answer, users[i]->securityQuestion[1]->question, users[i]->securityQuestion[1]->answer,
+                    users[i]->securityQuestion[2]->question, users[i]->securityQuestion[2]->answer);
+        }
+    }
 }
 
 
@@ -433,7 +468,7 @@ int unameExists(char **users, char* newName) {
     return 0;
 }
 
-void securityQuestion(USER *pUser, int questionNum) {
+void securityQuestion(USER **pUser, int questionNum, int userNum) {
     char *question;
     char *answer = "";
     char buffer[128];
@@ -441,11 +476,11 @@ void securityQuestion(USER *pUser, int questionNum) {
     int questionGood = 0;
     char *attemptStatus = "";
     do{
-        printf("Security Question: ");
+        printf("Security Question #%d: ", questionNum);
         question = fgets(buffer, LINE_LEN, stdin);
 
         if(strlen(question) < 1){
-            attemptStatus = "BAD QUESTION: Username can not be empty";
+            attemptStatus = "BAD QUESTION: question can not be empty";
         } else {
             questionGood = 1;
         }
@@ -455,13 +490,15 @@ void securityQuestion(USER *pUser, int questionNum) {
         }
     } while (!questionGood);
 
+    question = strtok(question, "\n");
+
     int answerGood = 0;
     do{
-        printf("Security Question: ");
-        question = fgets(buffer, LINE_LEN, stdin);
+        printf("%s? ", question);
+        answer = fgets(buffer, LINE_LEN, stdin);
 
         if(strlen(answer) < 1){
-            attemptStatus = "BAD QUESTION: Username can not be empty";
+            attemptStatus = "BAD QUESTION: answer can not be empty";
         } else {
             answerGood = 1;
         }
@@ -471,9 +508,11 @@ void securityQuestion(USER *pUser, int questionNum) {
         }
     } while (!answerGood);
 
-    SECURITY_QUESTION *inputQuestion = malloc(sizeof(SECURITY_QUESTION));
-    inputQuestion->question = question;
-    inputQuestion->answer =answer;
+    answer = strtok(answer, "\n");
 
-    pUser->securityQuestion[questionNum] = inputQuestion;
+    SECURITY_QUESTION *inputQuestion = malloc(sizeof(SECURITY_QUESTION));
+    inputQuestion->question = strdup(question);
+    inputQuestion->answer = strdup(answer);
+
+    pUser[userNum]->securityQuestion[questionNum] = inputQuestion;
 }
