@@ -440,7 +440,12 @@ void addUser(USER **users, FILE *fptrAppend) {
 
 
 int getUsers(USER **users, FILE *userPtr){
-    return 1;
+    for (int i = 0; i < MAX_USERS; ++i) {
+
+        fscanf(userPtr, "%s#%s#%s#%s#%s#%s#%s#%s\n", users[i]->uname, users[i]->passwd, users[i]->securityQuestion[0]->question,
+               users[i]->securityQuestion[0]->answer, users[i]->securityQuestion[1]->question, users[i]->securityQuestion[1]->answer,
+               users[i]->securityQuestion[2]->question, users[i]->securityQuestion[2]->answer);
+    }
 }
 
 
