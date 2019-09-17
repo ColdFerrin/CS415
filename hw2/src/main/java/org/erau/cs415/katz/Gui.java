@@ -16,12 +16,12 @@ class Gui extends JFrame {
     public Gui() {
         super("Ferrin's Calculator");
 
-        Font sansSerif22 = new Font("SansSerif", Font.PLAIN, 22);
+        Font sansSerif24 = new Font("SansSerif", Font.PLAIN, 24);
         Font sansSerif48 = new Font("SansSerif", Font.PLAIN, 48);
 
-        answerField = new JTextField(null, 24);
+        answerField = new JTextField(null, 20);
         answerField.setEditable(false);
-        answerField.setFont(sansSerif22);
+        answerField.setFont(sansSerif24);
 
         one = new JButton("1"); one.setFont(sansSerif48);
         two = new JButton("2"); two.setFont(sansSerif48);
