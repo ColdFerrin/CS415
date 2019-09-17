@@ -16,6 +16,7 @@
 #define MAX_PASSWD  20
 #define MAX_UNAME   16
 #define MAX_USERS 10
+#define MAX_QUESTION_LENGTH 128
 
 #ifndef NULL
 #define	NULL	0

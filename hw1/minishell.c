@@ -441,10 +441,32 @@ void addUser(USER **users, FILE *fptrAppend) {
 
 int getUsers(USER **users, FILE *userPtr){
     for (int i = 0; i < MAX_USERS; ++i) {
-
-        fscanf(userPtr, "%s#%s#%s#%s#%s#%s#%s#%s\n", users[i]->uname, users[i]->passwd, users[i]->securityQuestion[0]->question,
-               users[i]->securityQuestion[0]->answer, users[i]->securityQuestion[1]->question, users[i]->securityQuestion[1]->answer,
-               users[i]->securityQuestion[2]->question, users[i]->securityQuestion[2]->answer);
+        char* unameTemp = malloc(sizeof(char) * MAX_UNAME);
+        char* passwdTemp = malloc(sizeof(char) * 100);
+        SECURITY_QUESTION *securityQuestionsTemp[3];
+        char* sq1 = malloc(sizeof(char) * MAX_QUESTION_LENGTH);
+        char* sa1 = malloc(sizeof(char) * MAX_QUESTION_LENGTH);
+        char* sq2 = malloc(sizeof(char) * MAX_QUESTION_LENGTH);
+        char* sa2 = malloc(sizeof(char) * MAX_QUESTION_LENGTH);
+        char* sq3 = malloc(sizeof(char) * MAX_QUESTION_LENGTH);
+        char* sa3 = malloc(sizeof(char) * MAX_QUESTION_LENGTH);
+        fscanf(userPtr, "%s%s%s%s%s%s%s%s", unameTemp, passwdTemp, sq1, sa1, sq2, sa2, sq3, sa3);
+        users[i] = malloc(sizeof(USER));
+        users[i]->uname = unameTemp;
+        users[i]->passwd = passwdTemp;
+        users[i]->securityQuestion[0] = malloc(sizeof(SECURITY_QUESTION));
+        users[i]->securityQuestion[1] = malloc(sizeof(SECURITY_QUESTION));
+        users[i]->securityQuestion[2] = malloc(sizeof(SECURITY_QUESTION));
+        users[i]->securityQuestion[0]->question = sq1;
+        users[i]->securityQuestion[0]->question = sa1;
+        users[i]->securityQuestion[1]->question = sq2;
+        users[i]->securityQuestion[1]->question = sa2;
+        users[i]->securityQuestion[2]->question = sq3;
+        users[i]->securityQuestion[2]->question = sa3;
+        getc(userPtr);
+        if(getc(userPtr) == EOF){
+            break;
+        }
     }
 }
 
@@ -452,7 +474,7 @@ int getUsers(USER **users, FILE *userPtr){
 void putUsers(USER **users, FILE *userPtr){
     for(int i = 0; i < MAX_USERS; ++i){
         if(users[i] != NULL){
-            fprintf(userPtr, "%s#%s#%s#%s#%s#%s#%s#%s\n", users[i]->uname, users[i]->passwd, users[i]->securityQuestion[0]->question,
+            fprintf(userPtr, "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n", users[i]->uname, users[i]->passwd, users[i]->securityQuestion[0]->question,
                     users[i]->securityQuestion[0]->answer, users[i]->securityQuestion[1]->question, users[i]->securityQuestion[1]->answer,
                     users[i]->securityQuestion[2]->question, users[i]->securityQuestion[2]->answer);
         }
@@ -476,7 +498,7 @@ int unameExists(char **users, char* newName) {
 void securityQuestion(USER **pUser, int questionNum, int userNum) {
     char *question;
     char *answer = "";
-    char buffer[128];
+    char buffer[MAX_QUESTION_LENGTH + 1];
 
     int questionGood = 0;
     char *attemptStatus = "";
@@ -486,6 +508,8 @@ void securityQuestion(USER **pUser, int questionNum, int userNum) {
 
         if(strlen(question) < 1){
             attemptStatus = "BAD QUESTION: question can not be empty";
+        } else if (strlen(question) > MAX_QUESTION_LENGTH) {
+            attemptStatus = "BAD QUESTION: Must be at most 128";
         } else {
             questionGood = 1;
         }
@@ -503,7 +527,9 @@ void securityQuestion(USER **pUser, int questionNum, int userNum) {
         answer = fgets(buffer, LINE_LEN, stdin);
 
         if(strlen(answer) < 1){
-            attemptStatus = "BAD QUESTION: answer can not be empty";
+            attemptStatus = "BAD ANSWER: answer can not be empty";
+        } else if (strlen(answer) > MAX_QUESTION_LENGTH) {
+            attemptStatus = "BAD ANSWER: Must be at most 128";
         } else {
             answerGood = 1;
         }
