@@ -23,21 +23,36 @@ class Gui extends JFrame {
         answerField.setEditable(false);
         answerField.setFont(sansSerif24);
 
-        one = new JButton("1"); one.setFont(sansSerif48);
-        two = new JButton("2"); two.setFont(sansSerif48);
-        three = new JButton("3"); three.setFont(sansSerif48);
-        four = new JButton("4"); four.setFont(sansSerif48);
-        five = new JButton("5"); five.setFont(sansSerif48);
-        six = new JButton("6"); six.setFont(sansSerif48);
-        seven = new JButton("7"); seven.setFont(sansSerif48);
-        eight = new JButton("8"); eight.setFont(sansSerif48);
-        nine = new JButton("9"); nine.setFont(sansSerif48);
-        zero = new JButton("0"); zero.setFont(sansSerif48);
-        add = new JButton("+"); add.setFont(sansSerif48);
-        sub = new JButton("-"); sub.setFont(sansSerif48);
-        mul = new JButton("*"); mul.setFont(sansSerif48);
-        div = new JButton("/"); div.setFont(sansSerif48);
-        eq = new JButton("="); eq.setFont(sansSerif48);
+        one = new JButton("1");
+        one.setFont(sansSerif48);
+        two = new JButton("2");
+        two.setFont(sansSerif48);
+        three = new JButton("3");
+        three.setFont(sansSerif48);
+        four = new JButton("4");
+        four.setFont(sansSerif48);
+        five = new JButton("5");
+        five.setFont(sansSerif48);
+        six = new JButton("6");
+        six.setFont(sansSerif48);
+        seven = new JButton("7");
+        seven.setFont(sansSerif48);
+        eight = new JButton("8");
+        eight.setFont(sansSerif48);
+        nine = new JButton("9");
+        nine.setFont(sansSerif48);
+        zero = new JButton("0");
+        zero.setFont(sansSerif48);
+        add = new JButton("+");
+        add.setFont(sansSerif48);
+        sub = new JButton("-");
+        sub.setFont(sansSerif48);
+        mul = new JButton("*");
+        mul.setFont(sansSerif48);
+        div = new JButton("/");
+        div.setFont(sansSerif48);
+        eq = new JButton("=");
+        eq.setFont(sansSerif48);
 
         Dimension dimension = new Dimension(150, 75);
 
@@ -252,7 +267,7 @@ class Gui extends JFrame {
                 if (!opChosen) {
                     answerField.setText(sTemp1);
                 } else {
-                    answerField.setText(sTemp2);
+                    answerField.setText(sTemp1 + operation + sTemp2);
                 }
         }
     }
@@ -267,6 +282,7 @@ class Gui extends JFrame {
                 } else if (sTemp2 == null) {
                     opChosen = true;
                     operation = '+';
+                    answerField.setText(sTemp1 + operation);
                 } else {
                     System.out.println("Two inputs only");
                 }
@@ -276,6 +292,7 @@ class Gui extends JFrame {
                 } else if (sTemp2 == null) {
                     opChosen = true;
                     operation = '-';
+                    answerField.setText(sTemp1 + operation);
                 } else {
                     System.out.println("Two inputs only");
                 }
@@ -285,6 +302,7 @@ class Gui extends JFrame {
                 } else if (sTemp2 == null) {
                     opChosen = true;
                     operation = '*';
+                    answerField.setText(sTemp1 + operation);
                 } else {
                     System.out.println("Two inputs only");
                 }
@@ -294,22 +312,23 @@ class Gui extends JFrame {
                 } else if (sTemp2 == null) {
                     opChosen = true;
                     operation = '/';
+                    answerField.setText(sTemp1 + operation);
                 } else {
                     System.out.println("Two inputs only");
                 }
             } else if (src.equals(eq)) {
-                String sAnswer;
+                String sAnswer = null;
                 if (sTemp1 == null) {
                     System.out.println("Choose your numbers first!");
                 } else if (sTemp2 == null) {
                     answer = Double.parseDouble(sTemp1);
-                    sAnswer = Double.toString(answer);
+                    sAnswer = sTemp1 + "=" + answer;
                     answerField.setText(sAnswer);
                 } else {
                     double d1 = Double.parseDouble(sTemp1);
                     double d2 = Double.parseDouble(sTemp2);
 
-                    switch (operation){
+                    switch (operation) {
                         case '+':
                             answer = d1 + d2;
                             break;
@@ -320,11 +339,18 @@ class Gui extends JFrame {
                             answer = d1 * d2;
                             break;
                         case '/':
-                            answer = d1 / d2;
+                            if (d2 != 0.0) {
+                                answer = d1 / d2;
+                            } else {
+                                System.out.println("Divide by 0 error!");
+                                sAnswer = "DIV BY 0 ERR!";
+                            }
                             break;
                     }
 
-                    sAnswer = Double.toString(answer);
+                    if (sAnswer == null) {
+                        sAnswer = sTemp1 + operation + sTemp2 + "=" + answer;
+                    }
                     answerField.setText(sAnswer);
                 }
             }
